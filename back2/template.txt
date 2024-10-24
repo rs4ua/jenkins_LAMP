@@ -1,0 +1,5 @@
+  backend2:
+    image: registry.docker.loc/root/lamp:back2
+    container_name: back2_container
+    restart: always
+

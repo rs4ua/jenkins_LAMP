@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  ngx:
+    image: nginx
+    container_name: nginx-front111
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/home/roman/full-docker-project/nginx/src:/etc/nginx/conf.d"
+      - "/home/roman/full-docker-project/nginx/ssl:/etc/nginx/ssl"

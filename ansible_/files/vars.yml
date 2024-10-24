@@ -1,0 +1,9 @@
+---
+ansible_user                 : "{{ lookup('env', 'PROD_SERVER_USER') }}"
+ansible_sudo_pass            : "{{ lookup('env', 'PROD_SUDO_PASS') }}"
+ansible_ssh_private_key_file : "{{ lookup('env', 'ID_RSA') }}"
+host_key_checking            : false
+command_warnings             : false
+deprecation_warnings         : false
+...
+

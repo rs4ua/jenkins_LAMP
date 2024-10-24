@@ -1,0 +1,147 @@
+---
+- name: Configuring Prod Server
+  hosts: all
+  become: yes
+  vars_files:
+  - ./files/vars.yml
+  tasks:
+    - block: # configure dns and time
+        - name: Remove resolv.conf file
+          file:
+            path: /etc/resolv.conf
+            state: absent
+
+        - name: Create dns connect
+          ansible.builtin.template:
+            src: "./files/resolv.conf.j2"
+            dest: "/etc/resolv.conf"
+            owner: "root"
+            group: "root"
+            mode: "0644"
+
+        - name: Set time zone
+          community.general.timezone:
+            name: America/Chicago
+
+
+    - block: # configure and install docker
+        - name: Add Docker GPG apt Key
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+
+        - name: Add Docker Repository
+          apt_repository:
+            repo: deb https://download.docker.com/linux/ubuntu focal stable
+            state: present
+            filename: 'docker'
+
+        - name: Update apt cache
+          apt:
+            update_cache: yes
+
+        - name: Install docker components
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+              - docker-compose
+            state: present
+
+        - name: Install NodeExporter
+          apt:
+            name:
+              - prometheus-node-exporter
+            state: present
+
+        - name: Adding docker user
+          user:
+            name: '{{ ansible_user }}'
+            append: yes
+            groups: docker
+
+        - name: Reboot servers
+          shell: sleep 5 && reboot now
+          async: 1
+          poll: 0
+
+        - name: Wait till my server will come up online
+          wait_for:
+            host: '{{ inventory_hostname }}'
+            state: started
+            delay: 5
+            timeout: 40
+          delegate_to: 127.0.0.1
+
+    - block: # append certificates
+        - name: Copy certificate to hosts
+          ansible.builtin.copy:
+            src: "./keys/{{ item }}"
+            dest: "/usr/local/share/ca-certificates/{{ item }}"
+            mode: 0644
+          loop:
+            - gitlab.docker.loc.crt
+            - registry.docker.loc.crt
+          notify:
+            - update ca cert
+            - restart docker demon
+
+    - block: #Configuring FireWall
+        - name: Ensure UFW is installed
+          ansible.builtin.package:
+            name: ufw
+            state: present
+
+        - name: Allow SSH (port 22)
+          ansible.builtin.ufw:
+            rule: allow
+            port: 22
+
+        - name: Allow HTTP (port 80)
+          ansible.builtin.ufw:
+            rule: allow
+            port: 80
+
+        - name: Allow HTTPS (port 443)
+          ansible.builtin.ufw:
+            rule: allow
+            port: 443
+
+        - name: Allow NodeExporter (port 9100)
+          ansible.builtin.ufw:
+            rule: allow
+            port: 9100
+
+        - name: Allow DNS (port 53) from specific IP addresses
+          ansible.builtin.ufw:
+            rule: allow
+            port: 53
+            from_ip: "{{ item }}"
+            proto: udp
+          with_items:
+            - 192.168.1.1
+            - 8.8.8.8
+            - 127.0.0.53
+
+        - name: Enable UFW
+          ansible.builtin.ufw:
+            state: enabled
+
+        - name: Reload UFW
+          ansible.builtin.ufw:
+            state: reloaded
+
+  handlers:
+    - name: update ca cert
+      ansible.builtin.shell: update-ca-certificates
+      listen: update ca certificates
+
+    - name: restart docker demon
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+      when: "'docker0' is in ansible_interfaces"
+...

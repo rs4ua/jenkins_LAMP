@@ -1,0 +1,5 @@
+[docker_gitlab_ci_cd_server]
+ci-cd ansible_host="{{ lookup('env', 'PROD_SERVER_IP') }}"
+
+[docker_gitlab_ci_cd_server_ALL:children]
+docker_gitlab_ci_cd_server

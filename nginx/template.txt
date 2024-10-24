@@ -1,0 +1,7 @@
+  ngx:
+    image: registry.docker.loc/root/lamp:nginx
+    container_name: nginx-front
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443" 
