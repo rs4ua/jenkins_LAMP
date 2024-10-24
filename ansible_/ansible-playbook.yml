@@ -2,7 +2,7 @@
 - name: Configuring Prod Server
   hosts: all
   become: yes
-  environment:
+  vars:
     ANSIBLE_USER: "user"
     ANSIBLE_SUDO_PASS: "roMashka"
     ANSIBLE_SSH_PRIVATE_KEY: |
