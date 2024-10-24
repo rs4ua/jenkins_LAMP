@@ -76,69 +76,7 @@
             timeout: 40
           delegate_to: 127.0.0.1
 
-    - block: # append certificates
-        - name: Copy certificate to hosts
-          ansible.builtin.copy:
-            src: "./keys/{{ item }}"
-            dest: "/usr/local/share/ca-certificates/{{ item }}"
-            mode: 0644
-          loop:
-            - gitlab.docker.loc.crt
-            - registry.docker.loc.crt
-          notify:
-            - update ca cert
-            - restart docker demon
-
-    - block: #Configuring FireWall
-        - name: Ensure UFW is installed
-          ansible.builtin.package:
-            name: ufw
-            state: present
-
-        - name: Allow SSH (port 22)
-          ansible.builtin.ufw:
-            rule: allow
-            port: 22
-
-        - name: Allow HTTP (port 80)
-          ansible.builtin.ufw:
-            rule: allow
-            port: 80
-
-        - name: Allow HTTPS (port 443)
-          ansible.builtin.ufw:
-            rule: allow
-            port: 443
-
-        - name: Allow NodeExporter (port 9100)
-          ansible.builtin.ufw:
-            rule: allow
-            port: 9100
-
-        - name: Allow DNS (port 53) from specific IP addresses
-          ansible.builtin.ufw:
-            rule: allow
-            port: 53
-            from_ip: "{{ item }}"
-            proto: udp
-          with_items:
-            - 192.168.1.1
-            - 8.8.8.8
-            - 127.0.0.53
-
-        - name: Enable UFW
-          ansible.builtin.ufw:
-            state: enabled
-
-        - name: Reload UFW
-          ansible.builtin.ufw:
-            state: reloaded
-
   handlers:
-    - name: update ca cert
-      ansible.builtin.shell: update-ca-certificates
-      listen: update ca certificates
-
     - name: restart docker demon
       ansible.builtin.service:
         name: docker
