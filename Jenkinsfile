@@ -10,7 +10,7 @@ pipeline {
         stage('Check ENV') {
             steps {
                 script {
-                     echo "PROD_SERVER_IP: ${env.PROD_SERVER_IP}"
+                     sh "cat hosts.txt"
                 }
             }
         }         
