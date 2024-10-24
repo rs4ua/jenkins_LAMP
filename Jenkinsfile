@@ -10,8 +10,8 @@ pipeline {
         stage('Install Ansible') {
             steps {
                 sh '''
-                sudo apt update
-                sudo apt install ansible -y
+                apt update
+                apt install ansible -y
                 '''
             }
         }
