@@ -11,7 +11,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    ansible-playbook -i hosts.txt ansible_/docker_setup.yml \
+                    ansible-playbook -i hosts.txt ansible_/docker_setup.yml
                    // --extra-vars "ansible_ssh_private_key_file=$ID_RSA \
                    // prod_server_ip=$PROD_SERVER_IP \
                    // prod_server_user=$PROD_SERVER_USER \
