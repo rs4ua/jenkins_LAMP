@@ -1,5 +1,5 @@
 [docker_ci_cd_server]
-ci-cd ansible_host=192.168.1.128 ansible_user=user ansible_sudo_pass=roMashka ansible_ssh_private_key_file=keys/id_rsa
+ci-cd ansible_host=192.168.1.128
 
 [docker_ci_cd_server_ALL:children]
 docker_ci_cd_server
