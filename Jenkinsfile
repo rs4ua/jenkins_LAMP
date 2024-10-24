@@ -7,14 +7,6 @@ pipeline {
         PROD_SUDO_PASS = "${env.PROD_SUDO_PASS}"
     }
     stages {
-        stage('Install Ansible') {
-            steps {
-                sh '''
-                apt update
-                apt install ansible -y
-                '''
-            }
-        }
         stage('Run Ansible Playbook') {
             steps {
                 script {
