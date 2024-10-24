@@ -11,8 +11,7 @@ pipeline {
                     // Check if inventory file exists
                     if (fileExists(inventoryFile)) {
                         // Run the Ansible playbook
-                       // sh "ansible-playbook -i ${inventoryFile} ${playbookFile}"
-                        sh "ansible-playbook ${playbookFile}"
+                        sh "ansible-playbook -i ${inventoryFile} ${playbookFile}"
                     } else {
                         error "Inventory file ${inventoryFile} not found. Please check the path."
                     }
