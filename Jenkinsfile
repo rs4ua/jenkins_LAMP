@@ -11,6 +11,7 @@ pipeline {
             steps {
                 script {
                      sh "cat ansible_/hosts.txt"
+                     sh "cat ansible_/files/vars.yml"
                 }
             }
         }         
