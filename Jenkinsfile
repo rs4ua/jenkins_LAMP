@@ -18,6 +18,9 @@ pipeline {
             steps {
                 // Access the ANSIBLE_SECRET_TEXT from Jenkins credentials
                 withCredentials([string(credentialsId: 'ANSIBLE_SECRET_TEXT', variable: 'ANSIBLE_SECRET_TEXT')]) {
+
+                    sh 'echo "ANSIBLE_SECRET_TEXT: $ANSIBLE_SECRET_TEXT"'
+                    
                     // Run the Ansible playbook and pass the secret as needed
                     sh '''
                     ansible-playbook -i ${INVENTORY_FILE} ${PLAYBOOK_FILE} --extra-vars "secret_text=$ANSIBLE_SECRET_TEXT"
