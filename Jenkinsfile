@@ -13,9 +13,9 @@ pipeline {
             steps {
                 // Run the Ansible playbook
                 ansiblePlaybook(
-                    playbook: 'files/docker_setup.yml', // Path to your Ansible playbook
-                    inventory: 'files/hosts.txt', // Path to your inventory file
-                    extras: '-i files/hosts.txt', // Extra arguments if necessary
+                    playbook: 'ansible_/docker_setup.yml', // Path to your Ansible playbook
+                    inventory: 'ansible_/hosts.txt', // Path to your inventory file
+                    extras: '-i ansible_/hosts.txt', // Extra arguments if necessary
                     colorized: true // Optional, for better output formatting
                 )
             }
