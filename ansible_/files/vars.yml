@@ -1,7 +1,7 @@
 ---
 ansible_user                 : user
 ansible_sudo_pass            : roMashka
-ansible_ssh_private_key_file : keys/id_rsa
+ansible_ssh_private_key_file : ansible_/keys/id_rsa
 host_key_checking            : false
 command_warnings             : false
 deprecation_warnings         : false
