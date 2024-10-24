@@ -5,9 +5,9 @@ pipeline {
             steps {
                 script {
                     // Define the inventory and playbook file paths
-                    def inventoryFile = 'hosts.txt' // Path to your inventory file in the repo
-                    def playbookFile = 'docker_setup.yml' // Path to your playbook file in the repo
-                    sh "cd ansible_"
+                    def inventoryFile = 'ansible_/hosts.txt' // Correct path to your inventory file
+                    def playbookFile = 'ansible_/docker_setup.yml' // Correct path to your playbook file
+                    
                     // Check if inventory file exists
                     if (fileExists(inventoryFile)) {
                         // Run the Ansible playbook
