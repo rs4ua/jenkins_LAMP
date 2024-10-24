@@ -1,4 +1,0 @@
-  backend3:
-    image: registry.docker.loc/root/lamp:back3
-    container_name: back3_container
-    restart: always
