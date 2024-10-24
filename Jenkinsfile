@@ -1,28 +1,24 @@
 pipeline {
-    agent { label 'local-agent' } // Replace with your agent label
+    agent { label 'local-agent' }
+    environment {
+        ANSIBLE_HOST_KEY_CHECKING = 'false'
+    }
     stages {
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
         stage('Run Ansible Playbook') {
             steps {
                 script {
-                    // Define the inventory and playbook file paths
-                    def inventoryFile = 'ansible_/hosts.txt' // Correct path to your inventory file
-                    def playbookFile = 'ansible_/ansible-playbook.yml' // Correct path to your playbook file
-                    
-                    // Check if inventory file exists
-                    if (fileExists(inventoryFile)) {
-                        // Run the Ansible playbook
-                        sh "ansible-playbook -i ${inventoryFile} ${playbookFile}"
-                    } else {
-                        error "Inventory file ${inventoryFile} not found. Please check the path."
-                    }
+                    // Running ansible-playbook
+                    sh 'ansible-playbook -i ansible_/hosts.txt ansible_/ansible-playbook.yml'
                 }
             }
         }
     }
     post {
-        success {
-            echo 'Ansible playbook executed successfully!'
-        }
         failure {
             echo 'Ansible playbook execution failed!'
         }
