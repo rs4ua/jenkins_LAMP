@@ -48,9 +48,6 @@
     COMMAND_WARNINGS: "false"
     DEPRECATION_WARNINGS: "false"
     
-  vars:
-    ansible_host: 192.168.1.128
-    
   tasks:
     - block: # configure dns and time
         - name: Remove resolv.conf file
