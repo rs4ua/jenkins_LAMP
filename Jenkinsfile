@@ -11,10 +11,9 @@ pipeline {
             steps {
                 script {
                      echo "PROD_SERVER_IP: ${env.PROD_SERVER_IP}"
-             }
-          }
-       }         
-    }
+                }
+            }
+        }         
         stage('Run Ansible Playbook') {
             steps {
                 script {
