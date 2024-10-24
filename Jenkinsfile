@@ -7,6 +7,14 @@ pipeline {
         PROD_SUDO_PASS = "${env.PROD_SUDO_PASS}"
     }
     stages {
+        stage('Check ENV') {
+            steps {
+                script {
+                     echo "PROD_SERVER_IP: ${env.PROD_SERVER_IP}"
+             }
+          }
+       }         
+    }
         stage('Run Ansible Playbook') {
             steps {
                 script {
