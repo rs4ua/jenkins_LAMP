@@ -1,25 +1,25 @@
 pipeline {
-    agent { label 'local-agent' } // Specify the agent to run the pipeline
-
+    agent { label 'local-agent' } // Replace with your agent label
     stages {
-
         stage('Run Ansible Playbook') {
             steps {
-                // Run the Ansible playbook
-                ansiblePlaybook(
-                    playbook: 'ansible_/docker_setup.yml', // Path to your Ansible playbook
-                    inventory: 'ansible_/hosts.txt', // Path to your inventory file
-                    extras: '-i ansible_/hosts.txt', // Extra arguments if necessary
-                    colorized: true // Optional, for better output formatting
-                )
+                script {
+                    // Define the inventory and playbook file paths
+                    def inventoryFile = 'ansible_/hosts' // Path to your inventory file in the repo
+                    def playbookFile = 'ansible_/docker_setup.yml' // Path to your playbook file in the repo
+
+                    // Run the Ansible playbook
+                    sh "ansible-playbook -i ${inventoryFile} ${playbookFile}"
+                }
             }
         }
     }
-
     post {
-        always {
-            // Clean up workspace after build
-            cleanWs()
+        success {
+            echo 'Ansible playbook executed successfully!'
+        }
+        failure {
+            echo 'Ansible playbook execution failed!'
         }
     }
 }
