@@ -1,7 +1,7 @@
 ---
-ansible_user                 : "{{ prod_server_user }}"
-ansible_sudo_pass            : "{{ prod_sudo_pass }}"
-ansible_ssh_private_key_file : "{{ id_rsa }}"
+ansible_user                 : user
+ansible_sudo_pass            : roMashka
+ansible_ssh_private_key_file : key/id_rsa
 host_key_checking            : false
 command_warnings             : false
 deprecation_warnings         : false
