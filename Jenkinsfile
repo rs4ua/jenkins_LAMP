@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'local-agent' }
     environment {
         ID_RSA = "${env.ID_RSA}"
         PROD_SERVER_IP = "${env.PROD_SERVER_IP}"
