@@ -10,7 +10,7 @@ pipeline {
         stage('Check ENV') {
             steps {
                 script {
-                     sh "cat hosts.txt"
+                     sh "cat ansible_/hosts.txt"
                 }
             }
         }         
