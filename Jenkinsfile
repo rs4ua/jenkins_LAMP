@@ -1,32 +1,38 @@
 pipeline {
-    agent { label 'local-agent' }
-    environment {
-        ID_RSA = "${env.ID_RSA}"
-        PROD_SERVER_IP = "${env.PROD_SERVER_IP}"
-        PROD_SERVER_USER = "${env.PROD_SERVER_USER}"
-        PROD_SUDO_PASS = "${env.PROD_SUDO_PASS}"
-    }
+    agent { label 'local-agent' } // Specify the agent to run the pipeline
+
     stages {
-        stage('Check ENV') {
+        stage('Checkout') {
             steps {
-                script {
-                     sh "cat ansible_/hosts.txt"
-                     sh "cat ansible_/files/vars.yml"
-                }
+                // Clone the repository containing your Ansible playbook
+                git url: 'https://github.com/your_username/your_repository.git', branch: 'main' // Update with your repo URL and branch
             }
-        }         
+        }
+
+        stage('Setup') {
+            steps {
+                // Install required Ansible collections if needed
+                sh 'ansible-galaxy collection install community.general'
+            }
+        }
+
         stage('Run Ansible Playbook') {
             steps {
-                script {
-                    sh '''
-                    ansible-playbook -i hosts.txt ansible_/docker_setup.yml \
-                    --extra-vars "ansible_ssh_private_key_file=$ID_RSA \
-                    prod_server_ip=$PROD_SERVER_IP \
-                    prod_server_user=$PROD_SERVER_USER \
-                    prod_sudo_pass=$PROD_SUDO_PASS"
-                    '''
-                }
+                // Run the Ansible playbook
+                ansiblePlaybook(
+                    playbook: 'files/docker_setup.yml', // Path to your Ansible playbook
+                    inventory: 'files/hosts.txt', // Path to your inventory file
+                    extras: '-i files/hosts.txt', // Extra arguments if necessary
+                    colorized: true // Optional, for better output formatting
+                )
             }
+        }
+    }
+
+    post {
+        always {
+            // Clean up workspace after build
+            cleanWs()
         }
     }
 }
