@@ -1,6 +1,12 @@
 pipeline {
     agent { label 'local-agent' } // Replace with your agent label
     stages {
+        stage('Checkout') {
+            steps {
+                // Checkout your code from GitHub
+                git url: 'https://github.com/rs4ua/jenkins_LAMP.git', branch: 'main' // Replace with your repository URL and branch
+            }
+        }
         stage('List Files') {
             steps {
                 // List files in the ansible_ directory to verify inventory location
@@ -11,7 +17,7 @@ pipeline {
             steps {
                 script {
                     // Define the inventory and playbook file paths
-                    def inventoryFile = 'ansible_/hosts.thx' // Path to your inventory file in the repo
+                    def inventoryFile = 'ansible_/hosts.txt' // Path to your inventory file in the repo
                     def playbookFile = 'ansible_/docker_setup.yml' // Path to your playbook file in the repo
 
                     // Check if inventory file exists
@@ -34,3 +40,4 @@ pipeline {
         }
     }
 }
+
