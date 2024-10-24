@@ -1,36 +1,38 @@
 pipeline {
-    agent { label 'local-agent' }
+    agent any
+
     environment {
-        ANSIBLE_HOST_KEY_CHECKING = 'false'
+        // Define an environment variable for the inventory file or other configs
+        INVENTORY_FILE = 'ansible_/hosts.txt'
+        PLAYBOOK_FILE = 'ansible_/ansible-playbook.yml'
     }
+
     stages {
-        stage('Checkout SCM') {
+        stage('Clone Repository') {
             steps {
-                checkout scm
+                sh "ls -R"
             }
         }
-        stage('Prepare SSH Key') {
-            steps {
-                script {
-                    // Write the private key to a file
-                    writeFile file: 'ansible_/private_key.pem', text: "${ANSIBLE_SSH_PRIVATE_KEY}"
-                    // Set proper permissions for the private key file
-                    sh 'chmod 600 ansible_/private_key.pem'
-                }
-            }
-        }
+
         stage('Run Ansible Playbook') {
             steps {
-                script {
-                    // Running ansible-playbook with the specified private key
-                    sh 'ansible-playbook -i ansible_/hosts.txt --private-key ansible_/private_key.pem ansible_/ansible-playbook.yml'
+                // Access the ANSIBLE_SECRET_TEXT from Jenkins credentials
+                withCredentials([string(credentialsId: 'ansible_secret_text', variable: 'ANSIBLE_SECRET_TEXT')]) {
+                    // Run the Ansible playbook and pass the secret as needed
+                    sh '''
+                    ansible-playbook -i ${INVENTORY_FILE} ${PLAYBOOK_FILE} --extra-vars "secret_text=$ANSIBLE_SECRET_TEXT"
+                    '''
                 }
             }
         }
     }
+
     post {
+        success {
+            echo 'Playbook executed successfully!'
+        }
         failure {
-            echo 'Ansible playbook execution failed!'
+            echo 'Failed to execute playbook.'
         }
     }
 }
