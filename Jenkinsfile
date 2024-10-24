@@ -8,14 +8,7 @@ pipeline {
                 git url: 'https://github.com/your_username/your_repository.git', branch: 'main' // Update with your repo URL and branch
             }
         }
-
-        stage('Setup') {
-            steps {
-                // Install required Ansible collections if needed
-                sh 'ansible-galaxy collection install community.general'
-            }
-        }
-
+        
         stage('Run Ansible Playbook') {
             steps {
                 // Run the Ansible playbook
