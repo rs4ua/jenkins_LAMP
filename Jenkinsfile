@@ -2,7 +2,7 @@ pipeline {
     agent { label 'local-agent' }
 
     environment {
-        // Define an environment variable for the inventory file or other configs
+        // Define environment variables for inventory and playbook files
         INVENTORY_FILE = 'ansible_/hosts.txt'
         PLAYBOOK_FILE = 'ansible_/ansible-playbook.yml'
     }
@@ -10,19 +10,17 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                sh "ls -R"
+                // List files to confirm the repository is cloned
+                sh "ls -l"
             }
         }
 
         stage('Run Ansible Playbook') {
             steps {
                 // Access the ANSIBLE_SECRET_TEXT from Jenkins credentials
-                withCredentials([string(credentialsId: 'ANSIBLE_SECRET_TEXT', variable: 'ANSIBLE_SECRET_TEXT')]) {
-                    
-                    // Run the Ansible playbook and pass the secret as needed
-                    sh '''
-                    ansible-playbook -i ${INVENTORY_FILE} ${PLAYBOOK_FILE} --extra-vars "secret_text=$ANSIBLE_SECRET_TEXT"
-                    '''
+                withCredentials([string(credentialsId: 'ANSIBLE_SECRET_TEXT', variable: 'VAULT_PASS')]) {
+                    // Ensure the vault password is being passed to ansible-playbook
+                    sh "ansible-playbook -i ${INVENTORY_FILE} ${PLAYBOOK_FILE} --vault-password-file <(echo \$VAULT_PASS) --extra-vars secret_text=\$VAULT_PASS"
                 }
             }
         }
