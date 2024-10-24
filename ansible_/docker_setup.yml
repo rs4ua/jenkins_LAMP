@@ -3,7 +3,7 @@
   hosts: all
   become: yes
   vars_files:
-  - ./files/vars.yml
+  - ansible_/files/vars.yml
   tasks:
     - block: # configure dns and time
         - name: Remove resolv.conf file
