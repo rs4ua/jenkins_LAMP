@@ -115,9 +115,12 @@ networks:
             steps {
                 script {
                     sshagent([SSH_CREDENTIALS_ID]) {
+                        
+                        sh "ssh ${REMOTE_SERVER} 'docker-compose -f /home/user/docker-compose.yml down || true'"
+                        
                         // Copy docker-compose.yml to the remote server
                         sh "scp docker-compose.yml user@${REMOTE_SERVER}:/home/user/"
-                        sh "ssh ${REMOTE_SERVER} 'docker-compose -f /home/user/docker-compose.yml down || true'"
+                        
                         // Run docker-compose up on the remote server
                         sh "ssh ${REMOTE_SERVER} 'docker-compose -f /home/user/docker-compose.yml up -d'"
                     }
