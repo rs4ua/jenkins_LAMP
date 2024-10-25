@@ -109,11 +109,14 @@ networks:
             steps {
                 script {
                     sshagent([SSH_CREDENTIALS_ID]) {
+
+                        //sh "ssh ${REMOTE_SERVER} 'docker-compose -f /home/user/docker-compose.yml down || true'"
+                        
                         // Copy docker-compose.yml to the remote server
-                        sh "scp docker-compose.yml ${SSH_CREDENTIALS_ID}@${REMOTE_SERVER}:/path/to/deploy/directory/"
+                        sh "scp docker-compose.yml ${SSH_CREDENTIALS_ID}@${REMOTE_SERVER}:/home/user/"
 
                         // Run docker-compose up on the remote server
-                        sh "ssh ${REMOTE_SERVER} 'docker-compose -f /path/to/deploy/directory/docker-compose.yml up -d'"
+                        sh "ssh ${REMOTE_SERVER} 'docker-compose -f /home/user/docker-compose.yml up -d'"
                     }
                 }
             }
