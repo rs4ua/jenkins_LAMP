@@ -13,6 +13,8 @@ pipeline {
         PREVIOUS_DOCKER_IMAGE_VERSION = "1.${env.BUILD_NUMBER.toInteger() - 1}"
         NEXUS_URL = '192.168.1.72:8082'
         NEXUS_REPOSITORY = 'repository/docker-host'
+        REMOTE_SERVER = '192.168.1.128'
+        SSH_CREDENTIALS_ID = 'ssh_prod_srv'
     }
     
 //*****************************************************************************************************************************************************************
@@ -122,39 +124,65 @@ pipeline {
                     def dockerNexusImageTag_4 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag_4}"
 
                     // Remove local images
-                    sh "docker rmi ${dockerImageTag_1}"
-                    sh "docker rmi ${dockerNexusImageTag_1}"
-                    sh "docker rmi ${dockerImageTag_2}"
-                    sh "docker rmi ${dockerNexusImageTag_2}"
-                    sh "docker rmi ${dockerImageTag_3}"
-                    sh "docker rmi ${dockerNexusImageTag_3}"
-                    sh "docker rmi ${dockerImageTag_4}"
-                    sh "docker rmi ${dockerNexusImageTag_4}"
+                    sh """
+                        docker rmi ${dockerImageTag_1}
+                        docker rmi ${dockerNexusImageTag_1}
+                        docker rmi ${dockerImageTag_2}
+                        docker rmi ${dockerNexusImageTag_2}
+                        docker rmi ${dockerImageTag_3}
+                        docker rmi ${dockerNexusImageTag_3}
+                        docker rmi ${dockerImageTag_4}
+                        docker rmi ${dockerNexusImageTag_4}
+                    """
                }
             }
         }
         
 //*****************************************************************************************************************************************************************
-        
-        stage('Remove Previous Docker Images') {
+        // Stage to pull Docker images from Nexus on remote server
+        stage('Pull Image from Nexus') {
             steps {
                 script {
-                    def dockerPreviosImageTag_1 = "${DOCKER_IMAGE_NAME_1}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
-                    def previousNexusImageTag_1 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerPreviosImageTag_1}"
-                    def dockerPreviosImageTag_2 = "${DOCKER_IMAGE_NAME_2}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
-                    def previousNexusImageTag_2 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerPreviosImageTag_2}"
-                    def dockerPreviosImageTag_3 = "${DOCKER_IMAGE_NAME_3}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
-                    def previousNexusImageTag_3 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerPreviosImageTag_3}"
-                    def dockerPreviosImageTag_4 = "${DOCKER_IMAGE_NAME_4}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
-                    def previousNexusImageTag_4 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerPreviosImageTag_4}"
+                    def nexusRepositoryTag1 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_1}:${DOCKER_IMAGE_VERSION}"
+                    def nexusRepositoryTag2 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_2}:${DOCKER_IMAGE_VERSION}"
+                    def nexusRepositoryTag3 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_3}:${DOCKER_IMAGE_VERSION}"
+                    def nexusRepositoryTag4 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_4}:${DOCKER_IMAGE_VERSION}"
 
-                    sh "docker rmi ${previousNexusImageTag_1} || true"
-                    sh "docker rmi ${previousNexusImageTag_2} || true"
-                    sh "docker rmi ${previousNexusImageTag_3} || true"
-                    sh "docker rmi ${previousNexusImageTag_4} || true"
+                    // Use SSH to pull images on the remote server
+                    sshagent([SSH_CREDENTIALS_ID]) {
+                        sh """
+                            ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag1} || true'
+                            ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag2} || true'
+                            ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag3} || true'
+                            ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag4} || true'
+                        """
+                    }
                 }
             }
         }
+//*****************************************************************************************************************************************************************
+        // Stage to remove old Docker images on remote server
+        stage('Remove Previous Docker Images') {
+            steps {
+                script {
+                    def previousNexusImageTag1 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_1}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
+                    def previousNexusImageTag2 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_2}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
+                    def previousNexusImageTag3 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_3}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
+                    def previousNexusImageTag4 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_4}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
+
+                    // Use SSH to remove previous images on the remote server
+                    sshagent([SSH_CREDENTIALS_ID]) {
+                        sh """
+                            ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag1} || true'
+                            ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag2} || true'
+                            ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag3} || true'
+                            ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag4} || true'
+                        """
+                    }
+                }
+            }
+        }
+    }
         
 //*****************************************************************************************************************************************************************
         
