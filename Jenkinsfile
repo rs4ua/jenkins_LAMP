@@ -7,8 +7,8 @@ pipeline {
 //*****************************************************************************************************************************************************************
         DOCKER_IMAGE_NAME_1 = 'back1'
         DOCKER_IMAGE_NAME_2 = 'back2'
-        DOCKER_IMAGE_NAME_3 = 'back2'
-        DOCKER_IMAGE_NAME_4 = 'ngx'
+        DOCKER_IMAGE_NAME_3 = 'back3'
+        DOCKER_IMAGE_NAME_4 = 'nginx'
         DOCKER_IMAGE_VERSION = "1.${env.BUILD_NUMBER}"
         PREVIOUS_DOCKER_IMAGE_VERSION = "1.${env.BUILD_NUMBER.toInteger() - 1}"
         NEXUS_URL = '192.168.1.72:8082'
@@ -31,7 +31,7 @@ pipeline {
                         
                         // Build and push the image to Nexus
                         sh """
-                          docker build --no-cache -t ${dockerImageTag} .
+                          docker build --no-cache -t back1/${dockerImageTag} .
                           docker tag ${dockerImageTag} ${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_1}:${DOCKER_IMAGE_VERSION}
                           docker push ${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_1}:${DOCKER_IMAGE_VERSION}
                         """
@@ -39,19 +39,7 @@ pipeline {
                 }
             }
         }
-        
-//*****************************************************************************************************************************************************************
-        
-        stage('Stop and Remove Old Container and Image') {
-            steps {
-                script {
-                    // Stop and remove the old container if it exists
-                    sh "docker stop my-httpd || true"
-                    sh "docker rm my-httpd || true"
-                }
-            }
-        }
-        
+            
 //*****************************************************************************************************************************************************************
 
         stage('Remove Docker Image from Local Repository') {
