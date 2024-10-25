@@ -71,8 +71,8 @@ pipeline {
                     def dockerComposeContent = """
 version: '3'
 services:
-  ngx:
-    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/lamp:nginx
+  nginx:
+    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/nginx:${DOCKER_IMAGE_VERSION}
     container_name: nginx-front
     restart: always
     ports:
@@ -80,17 +80,17 @@ services:
       - "443:443"
 
   backend1:
-    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/lamp:back1:${DOCKER_IMAGE_VERSION}
+    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/back1:${DOCKER_IMAGE_VERSION}
     container_name: back1_container
     restart: always
 
   backend2:
-    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/lamp:back2:${DOCKER_IMAGE_VERSION}
+    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/back2:${DOCKER_IMAGE_VERSION}
     container_name: back2_container
     restart: always
 
   backend3:
-    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/lamp:back3:${DOCKER_IMAGE_VERSION}
+    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/back3:${DOCKER_IMAGE_VERSION}
     container_name: back3_container
     restart: always
 
@@ -109,9 +109,6 @@ networks:
             steps {
                 script {
                     sshagent([SSH_CREDENTIALS_ID]) {
-
-                        //sh "ssh ${REMOTE_SERVER} 'docker-compose -f /home/user/docker-compose.yml down || true'"
-                        
                         // Copy docker-compose.yml to the remote server
                         sh "scp docker-compose.yml ${SSH_CREDENTIALS_ID}@${REMOTE_SERVER}:/home/user/"
 
