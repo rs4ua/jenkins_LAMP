@@ -2,18 +2,11 @@ pipeline {
     agent { label 'local-agent' }
 
     environment {
-        // Define environment variables for inventory and playbook files
         INVENTORY_FILE = 'ansible_/hosts.txt'
         PLAYBOOK_FILE = 'ansible_/ansible-playbook.yml'
     }
 
     stages {
-        stage('Clone Repository') {
-            steps {
-                // List files to confirm the repository is cloned
-                sh "ls -l"
-            }
-        }
 
         stage('Run Ansible Playbook') {
             steps {
