@@ -4,7 +4,7 @@ pipeline {
     environment {
         INVENTORY_FILE = 'ansible_/hosts.txt'
         PLAYBOOK_FILE = 'ansible_/ansible-playbook.yml'
-        DOCKER_IMAGE_NAMES = ['back1', 'back2', 'back3', 'nginx']
+        DOCKER_IMAGE_NAMES = 'back1,back2,back3,nginx'
         DOCKER_IMAGE_VERSION = "1.${env.BUILD_NUMBER}"
         PREVIOUS_DOCKER_IMAGE_VERSION = "1.${env.BUILD_NUMBER.toInteger() - 1}"
         NEXUS_URL = '192.168.1.72:8082'
@@ -18,8 +18,11 @@ pipeline {
         stage('Build and Push Docker Images to Nexus') {
             steps {
                 script {
+                    // Split the string into a list
+                    def dockerImageNames = DOCKER_IMAGE_NAMES.split(',')
+                    
                     withCredentials([usernamePassword(credentialsId: 'nexusCredential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                        DOCKER_IMAGE_NAMES.each { imageName ->
+                        dockerImageNames.each { imageName ->
                             def dockerImageTag = "${imageName}:${DOCKER_IMAGE_VERSION}"
                             def nexusRepositoryTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag}"
 
@@ -42,7 +45,9 @@ pipeline {
         stage('Remove Docker Images from Local Repository') {
             steps {
                 script {
-                    DOCKER_IMAGE_NAMES.each { imageName ->
+                    // Use the split list for removing images
+                    def dockerImageNames = DOCKER_IMAGE_NAMES.split(',')
+                    dockerImageNames.each { imageName ->
                         def dockerImageTag = "${imageName}:${DOCKER_IMAGE_VERSION}"
                         sh "docker rmi ${dockerImageTag} || true"
                     }
@@ -54,7 +59,8 @@ pipeline {
         stage('Pull Images from Nexus on Remote Server') {
             steps {
                 script {
-                    DOCKER_IMAGE_NAMES.each { imageName ->
+                    def dockerImageNames = DOCKER_IMAGE_NAMES.split(',')
+                    dockerImageNames.each { imageName ->
                         def nexusRepositoryTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${imageName}:${DOCKER_IMAGE_VERSION}"
                         sshagent([SSH_CREDENTIALS_ID]) {
                             sh "ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag} || true'"
@@ -123,7 +129,8 @@ networks:
         stage('Remove Previous Docker Images') {
             steps {
                 script {
-                    DOCKER_IMAGE_NAMES.each { imageName ->
+                    def dockerImageNames = DOCKER_IMAGE_NAMES.split(',')
+                    dockerImageNames.each { imageName ->
                         def previousNexusImageTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${imageName}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
                         sshagent([SSH_CREDENTIALS_ID]) {
                             sh "ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag} || true'"
