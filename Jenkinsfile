@@ -1,14 +1,10 @@
 pipeline {
     agent { label 'local-agent' }
-//*****************************************************************************************************************************************************************
+
     environment {
         INVENTORY_FILE = 'ansible_/hosts.txt'
         PLAYBOOK_FILE = 'ansible_/ansible-playbook.yml'
-//*****************************************************************************************************************************************************************
-        DOCKER_IMAGE_NAME_1 = 'back1'
-        DOCKER_IMAGE_NAME_2 = 'back2'
-        DOCKER_IMAGE_NAME_3 = 'back3'
-        DOCKER_IMAGE_NAME_4 = 'nginx'
+        DOCKER_IMAGE_NAMES = ['back1', 'back2', 'back3', 'nginx']
         DOCKER_IMAGE_VERSION = "1.${env.BUILD_NUMBER}"
         PREVIOUS_DOCKER_IMAGE_VERSION = "1.${env.BUILD_NUMBER.toInteger() - 1}"
         NEXUS_URL = '192.168.1.72:8082'
@@ -16,168 +12,122 @@ pipeline {
         REMOTE_SERVER = '192.168.1.128'
         SSH_CREDENTIALS_ID = 'ssh_prod_srv'
     }
-    
-//*****************************************************************************************************************************************************************
+
     stages {
-//*****************************************************************************************************************************************************************
-        
-// Stage for DOCKER_IMAGE_NAME_1 (back1 folder)
-        stage('Create and Send Docker Image to Nexus - Image 1') {
+        // Stage to build and push Docker images to Nexus
+        stage('Build and Push Docker Images to Nexus') {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'nexusCredential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                        def dockerImageTag = "${DOCKER_IMAGE_NAME_1}:${DOCKER_IMAGE_VERSION}"
-                        def nexusRepositoryTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag}"
+                        DOCKER_IMAGE_NAMES.each { imageName ->
+                            def dockerImageTag = "${imageName}:${DOCKER_IMAGE_VERSION}"
+                            def nexusRepositoryTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag}"
 
-                        // Login to Nexus Docker registry
-                        sh "echo ${NEXUS_PASSWORD} | docker login ${NEXUS_URL} -u ${NEXUS_USERNAME} --password-stdin"
-                        
-                        // Build and push the image to Nexus
-                        sh """
-                          docker build --no-cache -t ${dockerImageTag} ./back1
-                          docker tag ${dockerImageTag} ${nexusRepositoryTag}
-                          docker push ${nexusRepositoryTag}
-                        """
+                            // Login to Nexus Docker registry
+                            sh "echo ${NEXUS_PASSWORD} | docker login ${NEXUS_URL} -u ${NEXUS_USERNAME} --password-stdin"
+
+                            // Build and push the image to Nexus
+                            sh """
+                                docker build --no-cache -t ${dockerImageTag} ./${imageName}
+                                docker tag ${dockerImageTag} ${nexusRepositoryTag}
+                                docker push ${nexusRepositoryTag}
+                            """
+                        }
                     }
                 }
             }
         }
 
-        // Repeat for DOCKER_IMAGE_NAME_2 (back2 folder)
-        stage('Create and Send Docker Image to Nexus - Image 2') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'nexusCredential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                        def dockerImageTag = "${DOCKER_IMAGE_NAME_2}:${DOCKER_IMAGE_VERSION}"
-                        def nexusRepositoryTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag}"
-
-                        // Login to Nexus Docker registry
-                        sh "echo ${NEXUS_PASSWORD} | docker login ${NEXUS_URL} -u ${NEXUS_USERNAME} --password-stdin"
-                        
-                        // Build and push the image to Nexus
-                        sh """
-                          docker build --no-cache -t ${dockerImageTag} ./back2
-                          docker tag ${dockerImageTag} ${nexusRepositoryTag}
-                          docker push ${nexusRepositoryTag}
-                        """
-                    }
-                }
-            }
-        }
-
-        // Repeat for DOCKER_IMAGE_NAME_3 (back3 folder)
-        stage('Create and Send Docker Image to Nexus - Image 3') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'nexusCredential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                        def dockerImageTag = "${DOCKER_IMAGE_NAME_3}:${DOCKER_IMAGE_VERSION}"
-                        def nexusRepositoryTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag}"
-
-                        // Login to Nexus Docker registry
-                        sh "echo ${NEXUS_PASSWORD} | docker login ${NEXUS_URL} -u ${NEXUS_USERNAME} --password-stdin"
-                        
-                        // Build and push the image to Nexus
-                        sh """
-                          docker build --no-cache -t ${dockerImageTag} ./back3
-                          docker tag ${dockerImageTag} ${nexusRepositoryTag}
-                          docker push ${nexusRepositoryTag}
-                        """
-                    }
-                }
-            }
-        }
-
-        // Repeat for DOCKER_IMAGE_NAME_4 (nginx folder)
-        stage('Create and Send Docker Image to Nexus - Image 4') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'nexusCredential', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                        def dockerImageTag = "${DOCKER_IMAGE_NAME_4}:${DOCKER_IMAGE_VERSION}"
-                        def nexusRepositoryTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag}"
-
-                        // Login to Nexus Docker registry
-                        sh "echo ${NEXUS_PASSWORD} | docker login ${NEXUS_URL} -u ${NEXUS_USERNAME} --password-stdin"
-                        
-                        // Build and push the image to Nexus
-                        sh """
-                          docker build --no-cache -t ${dockerImageTag} ./nginx
-                          docker tag ${dockerImageTag} ${nexusRepositoryTag}
-                          docker push ${nexusRepositoryTag}
-                        """
-                    }
-                }
-            }
-        }
-            
-//*****************************************************************************************************************************************************************
-
+        // Stage to remove Docker images from local repository
         stage('Remove Docker Images from Local Repository') {
-           steps {
-                script {
-                    def dockerImageTag_1 = "${DOCKER_IMAGE_NAME_1}:${DOCKER_IMAGE_VERSION}"
-                    def dockerNexusImageTag_1 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag_1}"
-                    def dockerImageTag_2 = "${DOCKER_IMAGE_NAME_2}:${DOCKER_IMAGE_VERSION}"
-                    def dockerNexusImageTag_2 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag_2}"
-                    def dockerImageTag_3 = "${DOCKER_IMAGE_NAME_3}:${DOCKER_IMAGE_VERSION}"
-                    def dockerNexusImageTag_3 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag_3}"
-                    def dockerImageTag_4 = "${DOCKER_IMAGE_NAME_4}:${DOCKER_IMAGE_VERSION}"
-                    def dockerNexusImageTag_4 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${dockerImageTag_4}"
-
-                    // Remove local images
-                    sh """
-                        docker rmi ${dockerImageTag_1}
-                        docker rmi ${dockerNexusImageTag_1}
-                        docker rmi ${dockerImageTag_2}
-                        docker rmi ${dockerNexusImageTag_2}
-                        docker rmi ${dockerImageTag_3}
-                        docker rmi ${dockerNexusImageTag_3}
-                        docker rmi ${dockerImageTag_4}
-                        docker rmi ${dockerNexusImageTag_4}
-                    """
-               }
-            }
-        }
-        
-//*****************************************************************************************************************************************************************
-        // Stage to pull Docker images from Nexus on remote server
-        stage('Pull Image from Nexus') {
             steps {
                 script {
-                    def nexusRepositoryTag1 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_1}:${DOCKER_IMAGE_VERSION}"
-                    def nexusRepositoryTag2 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_2}:${DOCKER_IMAGE_VERSION}"
-                    def nexusRepositoryTag3 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_3}:${DOCKER_IMAGE_VERSION}"
-                    def nexusRepositoryTag4 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_4}:${DOCKER_IMAGE_VERSION}"
-
-                    // Use SSH to pull images on the remote server
-                    sshagent([SSH_CREDENTIALS_ID]) {
-                        sh """
-                            ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag1} || true'
-                            ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag2} || true'
-                            ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag3} || true'
-                            ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag4} || true'
-                        """
+                    DOCKER_IMAGE_NAMES.each { imageName ->
+                        def dockerImageTag = "${imageName}:${DOCKER_IMAGE_VERSION}"
+                        sh "docker rmi ${dockerImageTag} || true"
                     }
                 }
             }
         }
-//*****************************************************************************************************************************************************************
-        // Stage to remove old Docker images on remote server
+
+        // Stage to pull Docker images from Nexus on remote server
+        stage('Pull Images from Nexus on Remote Server') {
+            steps {
+                script {
+                    DOCKER_IMAGE_NAMES.each { imageName ->
+                        def nexusRepositoryTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${imageName}:${DOCKER_IMAGE_VERSION}"
+                        sshagent([SSH_CREDENTIALS_ID]) {
+                            sh "ssh ${REMOTE_SERVER} 'docker pull ${nexusRepositoryTag} || true'"
+                        }
+                    }
+                }
+            }
+        }
+
+        // Stage to generate Docker Compose file
+        stage('Generate Docker Compose File') {
+            steps {
+                script {
+                    def dockerComposeContent = """
+version: '3'
+services:
+  ngx:
+    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/lamp:nginx
+    container_name: nginx-front
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+
+  backend1:
+    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/lamp:back1:${DOCKER_IMAGE_VERSION}
+    container_name: back1_container
+    restart: always
+
+  backend2:
+    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/lamp:back2:${DOCKER_IMAGE_VERSION}
+    container_name: back2_container
+    restart: always
+
+  backend3:
+    image: ${NEXUS_URL}/${NEXUS_REPOSITORY}/lamp:back3:${DOCKER_IMAGE_VERSION}
+    container_name: back3_container
+    restart: always
+
+networks:
+  front:
+  backend:
+"""
+                    // Write the docker-compose.yml file
+                    writeFile file: 'docker-compose.yml', text: dockerComposeContent
+                }
+            }
+        }
+
+        // Stage to deploy Docker Compose on remote server
+        stage('Deploy Docker Compose on Remote Server') {
+            steps {
+                script {
+                    sshagent([SSH_CREDENTIALS_ID]) {
+                        // Copy docker-compose.yml to the remote server
+                        sh "scp docker-compose.yml ${SSH_CREDENTIALS_ID}@${REMOTE_SERVER}:/path/to/deploy/directory/"
+
+                        // Run docker-compose up on the remote server
+                        sh "ssh ${REMOTE_SERVER} 'docker-compose -f /path/to/deploy/directory/docker-compose.yml up -d'"
+                    }
+                }
+            }
+        }
+
+        // Stage to remove previous Docker images on remote server
         stage('Remove Previous Docker Images') {
             steps {
                 script {
-                    def previousNexusImageTag1 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_1}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
-                    def previousNexusImageTag2 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_2}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
-                    def previousNexusImageTag3 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_3}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
-                    def previousNexusImageTag4 = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${DOCKER_IMAGE_NAME_4}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
-
-                    // Use SSH to remove previous images on the remote server
-                    sshagent([SSH_CREDENTIALS_ID]) {
-                        sh """
-                            ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag1} || true'
-                            ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag2} || true'
-                            ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag3} || true'
-                            ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag4} || true'
-                        """
+                    DOCKER_IMAGE_NAMES.each { imageName ->
+                        def previousNexusImageTag = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${imageName}:${PREVIOUS_DOCKER_IMAGE_VERSION}"
+                        sshagent([SSH_CREDENTIALS_ID]) {
+                            sh "ssh ${REMOTE_SERVER} 'docker rmi ${previousNexusImageTag} || true'"
+                        }
                     }
                 }
             }
