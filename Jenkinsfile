@@ -100,9 +100,6 @@ services:
     container_name: back3_container
     restart: always
 
-networks:
-  front:
-  backend:
 """
                     // Write the docker-compose.yml file
                     writeFile file: 'docker-compose.yml', text: dockerComposeContent
